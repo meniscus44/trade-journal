@@ -131,7 +131,7 @@ export const LOT_SIZES = {
     MANAPPURAM: 3000,
     MANKIND: 225,
     MARICO: 1200,
-    MARUTI: 50,
+    MARUTI: 100,
     MAXHEALTH: 525,
     MAZDOCK: 200,
     MCX: 625,
