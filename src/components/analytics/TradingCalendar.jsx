@@ -43,6 +43,20 @@ const TradingCalendar = ({ trades = [] }) => {
         calendarDays.push(day);
     });
 
+    // Pad the end of the month to complete the last week
+    const paddingEnd = calendarDays.length % 7 === 0 ? 0 : 7 - (calendarDays.length % 7);
+    for (let i = 0; i < paddingEnd; i++) {
+        calendarDays.push(null);
+    }
+
+    // Chunk into weeks and calculate weekly PnL
+    const weeks = [];
+    for (let i = 0; i < calendarDays.length; i += 7) {
+        const weekDays = calendarDays.slice(i, i + 7);
+        const weeklyPnL = weekDays.reduce((sum, day) => sum + (day ? day.pnl : 0), 0);
+        weeks.push({ days: weekDays, weeklyPnL });
+    }
+
     const getColorClass = (pnl, tradeCount) => {
         if (tradeCount === 0) return 'bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50';
         if (pnl > 5000) return 'bg-emerald-100 dark:bg-emerald-500/40 border border-emerald-200 dark:border-emerald-500/30';
@@ -73,11 +87,11 @@ const TradingCalendar = ({ trades = [] }) => {
             </div>
 
             {/* Weekday headers */}
-            <div className="grid grid-cols-7 gap-1 mb-1">
-                {WEEKDAYS.map(day => (
+            <div className="grid grid-cols-8 gap-1 mb-1">
+                {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'WEEKLY OVERVIEW'].map((day, idx) => (
                     <div
                         key={day}
-                        className={`text-center text-xs font-medium py-2 ${day === 'Sat' || day === 'Sun' ? 'text-slate-600' : 'text-slate-400'
+                        className={`text-center text-xs font-medium py-2 ${idx === 0 || idx === 6 ? 'text-slate-600' : 'text-slate-400'
                             }`}
                     >
                         {day}
@@ -86,70 +100,73 @@ const TradingCalendar = ({ trades = [] }) => {
             </div>
 
             {/* Calendar grid */}
-            <div className="grid grid-cols-7 gap-1">
-                {calendarDays.map((day, index) => {
-                    if (!day) {
-                        return <div key={`empty-${index}`} className="aspect-square" />;
-                    }
+            <div className="grid grid-cols-8 gap-1">
+                {weeks.map((week, weekIndex) => (
+                    <div key={`week-${weekIndex}`} className="contents">
+                        {week.days.map((day, dayIndex) => {
+                            if (!day) {
+                                return <div key={`empty-${weekIndex}-${dayIndex}`} className="aspect-square rounded-lg bg-slate-900/20 border border-slate-800/30" />;
+                            }
 
-                    const dateStr = day.dateStr;
-                    const holiday = isHoliday(dateStr);
-                    const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
-                    const isTodayDate = isToday(day.date);
+                            const dateStr = day.dateStr;
+                            const holiday = isHoliday(dateStr);
+                            const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+                            const isTodayDate = isToday(day.date);
 
-                    // Generate tooltip
-                    let tooltip = format(day.date, 'EEEE, MMM d, yyyy');
-                    if (holiday) tooltip += '\n📅 Trading Holiday';
-                    if (day.tradeCount > 0) {
-                        tooltip += `\n\n📊 Net P&L: ${formatCurrency(day.pnl)}`;
-                        tooltip += `\n🔢 Trades: ${day.tradeCount}`;
-                        tooltip += `\n\nDetailed Breakdown:`;
-                        day.trades?.forEach(t => {
-                            tooltip += `\n• ${t.underlying} ${t.type || 'OPT'}: ${formatCurrency(t.netPnL)}`;
-                        });
-                    } else if (!holiday && !isWeekend) {
-                        tooltip += '\nNo trades recorded';
-                    }
+                            // Generate tooltip
+                            let tooltip = format(day.date, 'EEEE, MMM d, yyyy');
+                            if (holiday) tooltip += '\n📅 Trading Holiday';
+                            if (day.tradeCount > 0) {
+                                tooltip += `\n\n📊 Net P&L: ${formatCurrency(day.pnl)}`;
+                                tooltip += `\n🔢 Trades: ${day.tradeCount}`;
+                                tooltip += `\n\nDetailed Breakdown:`;
+                                day.trades?.forEach(t => {
+                                    tooltip += `\n• ${t.underlying} ${t.type || 'OPT'}: ${formatCurrency(t.netPnL)}`;
+                                });
+                            } else if (!holiday && !isWeekend) {
+                                tooltip += '\nNo trades recorded';
+                            }
 
-                    return (
-                        <div
-                            key={dateStr}
-                            className={`
-                aspect-square rounded-lg relative group
-                transition-all duration-200 cursor-default
-                flex flex-col items-center justify-center
-                ${holiday ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50' : getColorClass(day.pnl, day.tradeCount)}
-                ${isTodayDate ? 'ring-2 ring-indigo-500 z-10' : ''}
-                ${isWeekend && !holiday ? 'opacity-60 bg-slate-50/50 dark:bg-slate-800/30' : ''}
-              `}
-                            title={tooltip}
-                        >
-                            <span className={`text-[10px] sm:text-xs font-medium mb-0.5 ${holiday ? 'text-red-600 dark:text-red-400' :
-                                isTodayDate ? 'text-indigo-600 dark:text-indigo-400' :
-                                    'text-slate-700 dark:text-slate-400'
-                                }`}>
-                                {day.day}
-                            </span>
-
-                            {day.tradeCount > 0 && (
-                                <>
-                                    <div className={`text-[10px] sm:text-xs font-bold leading-tight ${day.pnl >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
+                            return (
+                                <div
+                                    key={dateStr}
+                                    className={`
+                        aspect-square rounded-lg relative group
+                        transition-all duration-200 cursor-default
+                        flex flex-col items-center justify-center
+                        ${holiday ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800/50' : getColorClass(day.pnl, day.tradeCount)}
+                        ${isTodayDate ? 'ring-2 ring-indigo-500 z-10' : ''}
+                        ${isWeekend && !holiday ? 'opacity-60 bg-slate-50/50 dark:bg-slate-800/30' : ''}
+                    `}
+                                    title={tooltip}
+                                >
+                                    <span className={`text-[10px] sm:text-[11px] font-medium absolute top-1.5 left-2 ${holiday ? 'text-red-500 dark:text-red-400/70' :
+                                        isTodayDate ? 'text-indigo-600 dark:text-indigo-400' :
+                                            'text-slate-500 dark:text-slate-400'
                                         }`}>
-                                        {(day.pnl / 1000).toFixed(1)}k
-                                    </div>
-                                    <div className="flex gap-0.5 mt-1">
-                                        {Array.from({ length: Math.min(day.tradeCount, 4) }).map((_, i) => (
-                                            <div
-                                                key={i}
-                                                className={`w-1 h-1 rounded-full ${day.pnl >= 0 ? 'bg-emerald-600 dark:bg-emerald-500' : 'bg-red-600 dark:bg-red-500'}`}
-                                            />
-                                        ))}
-                                    </div>
-                                </>
-                            )}
+                                        {day.day}
+                                    </span>
+
+                                    {day.tradeCount > 0 && (
+                                        <>
+                                            <div className={`text-[10px] sm:text-[11px] mt-2 font-bold leading-tight ${day.pnl >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'
+                                                }`}>
+                                                {day.pnl > 0 ? '+' : ''}{formatCurrency(day.pnl)}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {/* Weekly Overview Cell */}
+                        <div className="aspect-square rounded-lg bg-slate-800/80 border border-slate-700/50 flex flex-col items-center justify-center p-2 mt-0 ml-1">
+                            <span className="text-[9px] sm:text-[10px] text-slate-500 font-medium tracking-wider mb-1">WEEK {weekIndex + 1}</span>
+                            <span className={`text-[11px] sm:text-[13px] font-bold ${week.weeklyPnL > 0 ? 'text-emerald-400' : week.weeklyPnL < 0 ? 'text-red-400' : 'text-slate-100'}`}>
+                                {week.weeklyPnL > 0 ? '+' : ''}{formatCurrency(week.weeklyPnL)}
+                            </span>
                         </div>
-                    );
-                })}
+                    </div>
+                ))}
             </div>
 
             {/* Legend */}
