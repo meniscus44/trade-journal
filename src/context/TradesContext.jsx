@@ -368,7 +368,17 @@ export const TradesProvider = ({ children }) => {
                     notes: entryData.notes
                 };
 
-                const { data, error } = await supabase.from('capital').insert(dbEntry).select().single();
+                let data, error;
+                if (entryData.id) {
+                    const response = await supabase.from('capital').update(dbEntry).eq('id', entryData.id).select().single();
+                    data = response.data;
+                    error = response.error;
+                } else {
+                    const response = await supabase.from('capital').insert(dbEntry).select().single();
+                    data = response.data;
+                    error = response.error;
+                }
+
                 if (error) throw error;
 
                 const savedEntry = {
@@ -377,7 +387,11 @@ export const TradesProvider = ({ children }) => {
                     openingBalance: data.opening_balance,
                     notes: data.notes
                 };
-                setCapitalEntries(prev => [savedEntry, ...prev].sort((a, b) => new Date(b.date) - new Date(a.date)));
+
+                setCapitalEntries(prev => {
+                    const list = prev.filter(e => e.id !== savedEntry.id);
+                    return [savedEntry, ...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+                });
                 return savedEntry;
             } catch (error) {
                 console.error('Error adding capital to Supabase:', error);

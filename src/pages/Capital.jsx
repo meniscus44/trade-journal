@@ -41,6 +41,7 @@ const Capital = () => {
 
         try {
             await addCapitalEntry({
+                id: editingId,
                 date,
                 openingBalance: parseFloat(amount),
                 notes
