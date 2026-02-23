@@ -17,6 +17,8 @@ export const calculateCharges = ({
     lotSize,
     quantity,
     direction,
+    entryOrders = 1,
+    exitOrders = 1,
     rates = DEFAULT_CHARGE_RATES,
 }) => {
     const totalShares = lotSize * quantity;
@@ -24,8 +26,8 @@ export const calculateCharges = ({
     const exitTurnover = exitPrice ? exitPrice * totalShares : 0;
     const totalTurnover = entryTurnover + exitTurnover;
 
-    // Brokerage: ₹20 per order (entry + exit = 2 orders if closed)
-    const numOrders = exitPrice ? 2 : 1;
+    // Brokerage: ₹20 per order
+    const numOrders = parseInt(entryOrders) + (exitPrice ? parseInt(exitOrders) : 0);
     const brokerage = rates.brokerage * numOrders;
 
     // STT: 0.0625% on sell side premium (options)

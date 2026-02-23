@@ -46,10 +46,12 @@ const TradeForm = ({ trade, onSuccess }) => {
         entryDate: new Date().toISOString().split('T')[0],
         entryTime: '',
         entryPrice: '',
+        entryOrders: 1,
         spotAtEntry: '',
         exitDate: '',
         exitTime: '',
         exitPrice: '',
+        exitOrders: 1,
         spotAtExit: '',
         strategy: 'NAKED_BUY',
         tags: [],
@@ -70,6 +72,8 @@ const TradeForm = ({ trade, onSuccess }) => {
         if (trade) {
             setFormData({
                 ...trade,
+                entryOrders: trade.entryOrders || 1, // Add fallback for existing trades
+                exitOrders: trade.exitOrders || 1, // Add fallback for existing trades
                 tags: trade.tags || [],
             });
         }
@@ -87,12 +91,14 @@ const TradeForm = ({ trade, onSuccess }) => {
                 lotSize,
                 quantity: parseInt(formData.quantity),
                 direction: formData.direction,
+                entryOrders: parseInt(formData.entryOrders) || 1,
+                exitOrders: parseInt(formData.exitOrders) || 1,
             });
             setChargePreview(charges);
         } else {
             setChargePreview(null);
         }
-    }, [formData.entryPrice, formData.exitPrice, formData.underlying, formData.quantity, formData.direction, lotSize]);
+    }, [formData.entryPrice, formData.exitPrice, formData.underlying, formData.quantity, formData.direction, formData.entryOrders, formData.exitOrders, lotSize]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -141,22 +147,27 @@ const TradeForm = ({ trade, onSuccess }) => {
         if (!validate()) return;
 
         setSaving(true);
+        // Clear previous submit errors
+        setErrors(prev => ({ ...prev, submit: null }));
+
         try {
             const tradeData = {
                 ...formData,
                 strikePrice: parseFloat(formData.strikePrice),
                 quantity: parseInt(formData.quantity),
                 entryPrice: parseFloat(formData.entryPrice),
+                entryOrders: parseInt(formData.entryOrders) || 1,
                 spotAtEntry: formData.spotAtEntry ? parseFloat(formData.spotAtEntry) : null,
                 exitPrice: formData.exitPrice ? parseFloat(formData.exitPrice) : null,
+                exitOrders: parseInt(formData.exitOrders) || 1,
                 spotAtExit: formData.spotAtExit ? parseFloat(formData.spotAtExit) : null,
                 lotSize,
             };
 
             if (isEditing) {
-                updateTrade(trade.id, tradeData);
+                await updateTrade(trade.id, tradeData);
             } else {
-                addTrade(tradeData);
+                await addTrade(tradeData);
             }
 
             if (onSuccess) {
@@ -166,6 +177,7 @@ const TradeForm = ({ trade, onSuccess }) => {
             }
         } catch (error) {
             console.error('Error saving trade:', error);
+            setErrors(prev => ({ ...prev, submit: error.message || 'Failed to save trade. Please try again.' }));
         } finally {
             setSaving(false);
         }
@@ -173,6 +185,12 @@ const TradeForm = ({ trade, onSuccess }) => {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
+            {errors.submit && (
+                <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 font-medium">
+                    {errors.submit}
+                </div>
+            )}
+
             {/* Basic Trade Info */}
             <Card>
                 <h3 className="text-lg font-semibold text-white mb-4">Trade Details</h3>
@@ -246,7 +264,7 @@ const TradeForm = ({ trade, onSuccess }) => {
             <Card>
                 <h3 className="text-lg font-semibold text-white mb-4">Entry Details</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <Input
                         label="Entry Date"
                         name="entryDate"
@@ -277,6 +295,16 @@ const TradeForm = ({ trade, onSuccess }) => {
                     />
 
                     <Input
+                        label="Entry Orders"
+                        name="entryOrders"
+                        type="number"
+                        min="1"
+                        value={formData.entryOrders}
+                        onChange={handleChange}
+                        placeholder="Default: 1"
+                    />
+
+                    <Input
                         label="Spot Price at Entry"
                         name="spotAtEntry"
                         type="number"
@@ -292,7 +320,7 @@ const TradeForm = ({ trade, onSuccess }) => {
             <Card>
                 <h3 className="text-lg font-semibold text-white mb-4">Exit Details (Required only if closing)</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <Input
                         label="Exit Date"
                         name="exitDate"
@@ -320,6 +348,16 @@ const TradeForm = ({ trade, onSuccess }) => {
                         onChange={handleChange}
                         placeholder="Premium per share"
                         error={errors.exitPrice}
+                    />
+
+                    <Input
+                        label="Exit Orders"
+                        name="exitOrders"
+                        type="number"
+                        min="1"
+                        value={formData.exitOrders}
+                        onChange={handleChange}
+                        placeholder="Default: 1"
                     />
 
                     <Input

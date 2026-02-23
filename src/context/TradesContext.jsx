@@ -38,9 +38,11 @@ export const TradesProvider = ({ children }) => {
                     entryDate: t.entry_date,
                     entryTime: t.entry_time,
                     entryPrice: t.entry_price,
+                    entryOrders: t.entry_orders || 1, // Add mapped field with fallback
                     exitDate: t.exit_date,
                     exitTime: t.exit_time,
                     exitPrice: t.exit_price,
+                    exitOrders: t.exit_orders || 1, // Add mapped field with fallback
                     expiryDate: t.expiry_date,
                     strikePrice: t.strike_price,
                     lotSize: t.lot_size,
@@ -85,6 +87,8 @@ export const TradesProvider = ({ children }) => {
                 lotSize,
                 quantity: tradeData.quantity,
                 direction: tradeData.direction,
+                entryOrders: tradeData.entryOrders,
+                exitOrders: tradeData.exitOrders,
             });
 
             const pnl = calculatePnL({ ...tradeData, lotSize, charges });
@@ -117,10 +121,12 @@ export const TradesProvider = ({ children }) => {
                     entry_date: newTrade.entryDate,
                     entry_time: newTrade.entryTime,
                     entry_price: newTrade.entryPrice,
+                    entry_orders: newTrade.entryOrders,
                     spot_at_entry: newTrade.spotAtEntry,
                     exit_date: newTrade.exitDate,
                     exit_time: newTrade.exitTime,
                     exit_price: newTrade.exitPrice,
+                    exit_orders: newTrade.exitOrders,
                     spot_at_exit: newTrade.spotAtExit,
                     status: newTrade.status,
                     gross_pnl: newTrade.grossPnL,
@@ -175,6 +181,8 @@ export const TradesProvider = ({ children }) => {
                 lotSize,
                 quantity: updatedData.quantity,
                 direction: updatedData.direction,
+                entryOrders: updatedData.entryOrders,
+                exitOrders: updatedData.exitOrders,
             });
 
             const pnl = calculatePnL({ ...updatedData, lotSize, charges });
@@ -212,10 +220,12 @@ export const TradesProvider = ({ children }) => {
                     entry_date: finalUpdates.entryDate,
                     entry_time: finalUpdates.entryTime,
                     entry_price: finalUpdates.entryPrice,
+                    entry_orders: finalUpdates.entryOrders,
                     spot_at_entry: finalUpdates.spotAtEntry,
                     exit_date: finalUpdates.exitDate,
                     exit_time: finalUpdates.exitTime,
                     exit_price: finalUpdates.exitPrice,
+                    exit_orders: finalUpdates.exitOrders,
                     spot_at_exit: finalUpdates.spotAtExit,
                     status: finalUpdates.status,
                     gross_pnl: finalUpdates.grossPnL,

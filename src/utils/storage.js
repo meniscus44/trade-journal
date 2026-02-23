@@ -240,8 +240,8 @@ export const exportTradesCSV = () => {
     const headers = [
         'ID', 'Underlying', 'Exchange', 'Option Type', 'Strike Price', 'Expiry Date',
         'Lot Size', 'Quantity', 'Direction', 'Strategy',
-        'Entry Date', 'Entry Time', 'Entry Price', 'Spot at Entry',
-        'Exit Date', 'Exit Time', 'Exit Price', 'Spot at Exit',
+        'Entry Date', 'Entry Time', 'Entry Price', 'Entry Orders', 'Spot at Entry',
+        'Exit Date', 'Exit Time', 'Exit Price', 'Exit Orders', 'Spot at Exit',
         'Status', 'Gross P&L', 'Total Charges', 'Net P&L',
         'Rationale', 'Emotions', 'Lessons Learned', 'Rating', 'Notes', 'Tags'
     ];
@@ -260,10 +260,12 @@ export const exportTradesCSV = () => {
         trade.entryDate,
         trade.entryTime,
         trade.entryPrice,
+        trade.entryOrders || 1,
         trade.spotAtEntry,
         trade.exitDate || '',
         trade.exitTime || '',
         trade.exitPrice || '',
+        trade.exitOrders || 1,
         trade.spotAtExit || '',
         trade.status,
         trade.grossPnL || '',
