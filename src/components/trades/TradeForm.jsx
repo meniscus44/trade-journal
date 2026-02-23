@@ -284,7 +284,7 @@ const TradeForm = ({ trade, onSuccess }) => {
                     />
 
                     <Input
-                        label="Entry Price (₹)"
+                        label="Average Entry Price (₹)"
                         name="entryPrice"
                         type="number"
                         step="0.05"
@@ -340,7 +340,7 @@ const TradeForm = ({ trade, onSuccess }) => {
                     />
 
                     <Input
-                        label="Exit Price (₹)"
+                        label="Average Exit Price (₹)"
                         name="exitPrice"
                         type="number"
                         step="0.05"
